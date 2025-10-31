@@ -1,14 +1,26 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, FileText, LogOut, Target } from 'lucide-react';
+import { Home, FileText, LogOut, Target, Mail, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [userEmail, setUserEmail] = useState<string>('');
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -22,6 +34,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/reflections', icon: FileText, label: 'Reflections' },
+    { path: '/contact', icon: Mail, label: 'Contact' },
   ];
 
   return (
@@ -40,6 +53,12 @@ const Navbar = () => {
           </Link>
 
           <div className="flex items-center gap-2">
+            {userEmail && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 mr-2">
+                <User className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">{userEmail}</span>
+              </div>
+            )}
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>
                 <Button

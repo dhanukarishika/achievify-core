@@ -4,6 +4,9 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import QuoteSection from '@/components/QuoteSection';
 import TaskList from '@/components/TaskList';
 import ReflectionForm from '@/components/ReflectionForm';
+import TimetableUpload from '@/components/TimetableUpload';
+import MotivationVideos from '@/components/MotivationVideos';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Dashboard = () => {
   return (
@@ -24,16 +27,38 @@ const Dashboard = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <TaskList />
-            </div>
-            
-            <div className="space-y-6">
+          <Tabs defaultValue="tasks" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
+              <TabsTrigger value="tasks">Tasks & Reflections</TabsTrigger>
+              <TabsTrigger value="timetable">Timetable</TabsTrigger>
+              <TabsTrigger value="motivation">Motivation</TabsTrigger>
+              <TabsTrigger value="quotes">Daily Quote</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="tasks">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                  <TaskList />
+                </div>
+                
+                <div className="space-y-6">
+                  <ReflectionForm />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="timetable">
+              <TimetableUpload />
+            </TabsContent>
+
+            <TabsContent value="motivation">
+              <MotivationVideos />
+            </TabsContent>
+
+            <TabsContent value="quotes">
               <QuoteSection />
-              <ReflectionForm />
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
