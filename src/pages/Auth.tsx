@@ -4,7 +4,7 @@ import { Target, Mail, Lock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground3D from '@/components/AnimatedBackground3D';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -62,7 +62,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen gradient-bg relative flex items-center justify-center px-6">
-      <AnimatedBackground />
+      <AnimatedBackground3D />
       
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}

@@ -1,17 +1,18 @@
 import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground3D from '@/components/AnimatedBackground3D';
 import QuoteSection from '@/components/QuoteSection';
 import TaskList from '@/components/TaskList';
 import ReflectionForm from '@/components/ReflectionForm';
 import TimetableUpload from '@/components/TimetableUpload';
 import MotivationVideos from '@/components/MotivationVideos';
+import CanvasDoodle from '@/components/CanvasDoodle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Dashboard = () => {
   return (
     <div className="min-h-screen gradient-bg relative">
-      <AnimatedBackground />
+      <AnimatedBackground3D />
       <Navbar />
       
       <main className="pt-24 pb-12 px-6">
@@ -28,10 +29,11 @@ const Dashboard = () => {
           </motion.div>
 
           <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-5 mb-8">
               <TabsTrigger value="tasks">Tasks & Reflections</TabsTrigger>
               <TabsTrigger value="timetable">Timetable</TabsTrigger>
               <TabsTrigger value="motivation">Motivation</TabsTrigger>
+              <TabsTrigger value="doodle">Doodle</TabsTrigger>
               <TabsTrigger value="quotes">Daily Quote</TabsTrigger>
             </TabsList>
 
@@ -53,6 +55,10 @@ const Dashboard = () => {
 
             <TabsContent value="motivation">
               <MotivationVideos />
+            </TabsContent>
+
+            <TabsContent value="doodle">
+              <CanvasDoodle />
             </TabsContent>
 
             <TabsContent value="quotes">

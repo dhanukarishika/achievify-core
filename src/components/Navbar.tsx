@@ -34,7 +34,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/reflections', icon: FileText, label: 'Reflections' },
-    { path: '/contact', icon: Mail, label: 'Contact' },
+    { path: '/contact', icon: Mail, label: 'Feedback' },
   ];
 
   return (

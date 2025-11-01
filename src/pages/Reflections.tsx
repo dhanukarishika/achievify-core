@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Calendar } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import AnimatedBackground from '@/components/AnimatedBackground';
+import AnimatedBackground3D from '@/components/AnimatedBackground3D';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -90,7 +90,7 @@ const Reflections = () => {
 
   return (
     <div className="min-h-screen gradient-bg relative">
-      <AnimatedBackground />
+      <AnimatedBackground3D />
       <Navbar />
       
       <main className="pt-24 pb-12 px-6">
