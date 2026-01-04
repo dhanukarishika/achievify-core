@@ -11,11 +11,12 @@ import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import { supabase } from "@/integrations/supabase/client";
+import Background from "./components/Background"; // ☁️ Bluish clouds
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,11 +25,11 @@ const App = () => {
       setLoading(false);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, []);
@@ -43,16 +44,26 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Background /> {/* ☁️ Your bluish moving clouds background */}
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route 
-              path="/" 
-              element={session ? <Navigate to="/dashboard" replace /> : <Navigate to="/auth" replace />} 
+            <Route
+              path="/"
+              element={
+                session ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              }
             />
-            <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <Auth />} />
+            <Route
+              path="/auth"
+              element={session ? <Navigate to="/dashboard" replace /> : <Auth />}
+            />
             <Route
               path="/dashboard"
               element={

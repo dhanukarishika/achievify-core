@@ -1,15 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, File, Trash2, Download } from 'lucide-react';
+// These are your project's real imports.
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 
+// --- MOCKS REMOVED ---
+// All the placeholder code has been deleted.
+// This component now relies on your project's real 
+// Supabase client and UI components.
+// --- END ---
+
+
 const TimetableUpload = () => {
   const [timetableFile, setTimetableFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  // Create a ref for the hidden file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadTimetable();
@@ -31,7 +41,7 @@ const TimetableUpload = () => {
     if (data && data.length > 0) {
       const { data: urlData } = await supabase.storage
         .from('timetables')
-        .createSignedUrl(`${user.id}/${data[0].name}`, 3600);
+        .createSignedUrl(`${user.id}/${data[0].name}`, 3600); // 1 hour expiry
 
       if (urlData) {
         setTimetableFile({ name: data[0].name, url: urlData.signedUrl });
@@ -43,7 +53,7 @@ const TimetableUpload = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
       toast({
         title: "File too large",
         description: "Please upload a file smaller than 5MB",
@@ -67,7 +77,7 @@ const TimetableUpload = () => {
     const fileName = `timetable_${Date.now()}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('timetables')
       .upload(filePath, file);
 
@@ -81,13 +91,32 @@ const TimetableUpload = () => {
       return;
     }
 
-    toast({
-      title: "Success!",
-      description: "Timetable uploaded successfully"
-    });
+    // --- FIX ---
+    // The upload was successful (uploadData.path contains the path).
+    // Now, create a signed URL for the file we *just* uploaded.
+    // This is more reliable than calling loadTimetable() which might hit a stale cache.
+    const { data: urlData, error: urlError } = await supabase.storage
+      .from('timetables')
+      .createSignedUrl(filePath, 3600); // Use the same path we just uploaded to
 
+    if (urlError) {
+      toast({
+        title: "Upload successful, but preview failed",
+        description: urlError.message,
+        variant: "destructive"
+      });
+    } else {
+      // Set the state directly with the new file info
+      setTimetableFile({ name: fileName, url: urlData.signedUrl });
+      toast({
+        title: "Success!",
+        description: "Timetable uploaded successfully"
+      });
+    }
+    
     setUploading(false);
-    loadTimetable();
+    // We no longer need loadTimetable() here
+    // loadTimetable(); 
   };
 
   const handleDelete = async () => {
@@ -115,12 +144,20 @@ const TimetableUpload = () => {
     });
     setTimetableFile(null);
   };
+  
+  // This function will be called by the button
+  const handleUploadButtonClick = () => {
+    // Programmatically click the hidden file input
+    fileInputRef.current?.click();
+  };
+
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
+      // Added `relative` to establish a stacking context
+      className="space-y-4 relative"
     >
       <Card className="glass-card p-6">
         <h2 className="text-2xl font-bold mb-4 text-gradient">Your Timetable</h2>
@@ -131,18 +168,31 @@ const TimetableUpload = () => {
             <p className="text-muted-foreground mb-4">
               Upload your timetable (PDF, PNG, JPG)
             </p>
-            <label htmlFor="timetable-upload">
-              <Button disabled={uploading} className="cursor-pointer">
-                {uploading ? 'Uploading...' : 'Choose File'}
-              </Button>
-              <input
-                id="timetable-upload"
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
+            
+            {/* FIX: 
+              1. The Button is no longer wrapped in a <label>.
+              2. It now has a direct onClick handler.
+            */}
+            <Button 
+              disabled={uploading} 
+              className="cursor-pointer relative z-10"
+              onClick={handleUploadButtonClick}
+            >
+              {uploading ? 'Uploading...' : 'Choose File'}
+            </Button>
+
+            {/*
+              FIX:
+              3. The <input> is now separate and controlled by the ref.
+            */}
+            <input
+              ref={fileInputRef}
+              id="timetable-upload"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
           </div>
         ) : (
           <div className="space-y-4">
@@ -168,8 +218,9 @@ const TimetableUpload = () => {
               </div>
             </div>
             
+            {/* Preview for images */}
             {timetableFile.url && timetableFile.name.match(/\.(jpg|jpeg|png)$/i) && (
-              <div className="rounded-lg overflow-hidden">
+              <div className="rounded-lg overflow-hidden border">
                 <img 
                   src={timetableFile.url} 
                   alt="Timetable" 
@@ -178,10 +229,11 @@ const TimetableUpload = () => {
               </div>
             )}
             
+            {/* Preview for PDF */}
             {timetableFile.url && timetableFile.name.match(/\.pdf$/i) && (
               <iframe
                 src={timetableFile.url}
-                className="w-full h-[600px] rounded-lg"
+                className="w-full h-[600px] rounded-lg border"
                 title="Timetable PDF"
               />
             )}
@@ -193,3 +245,4 @@ const TimetableUpload = () => {
 };
 
 export default TimetableUpload;
+

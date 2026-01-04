@@ -1,28 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Achievify - Personal Productivity & Motivation Tracker</title>
-    <meta name="description" content="Track your tasks, write daily reflections, and stay motivated with Achievify - the ultimate productivity app for students" />
-    <meta name="author" content="Achievify" />
+    <title>Achievify</title>
 
-    <meta property="og:title" content="Achievify - Personal Productivity Tracker" />
-    <meta property="og:description" content="Track your tasks, write daily reflections, and stay motivated with Achievify" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <!-- Tailwind base styles will be injected automatically -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #f6fcff; /* subtle fallback while canvas loads */
+      }
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+      #root {
+        height: 100%;
+        width: 100%;
+        position: relative;
+        z-index: 0; /* your app stays above the animated background */
+      }
+
+      canvas {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1; /* keep the canvas *behind* all content */
+        pointer-events: none; /* so it doesn’t block clicks */
+        background: transparent;
+      }
+    </style>
   </head>
-
   <body>
     <div id="root"></div>
+
+    <!-- This is where Vite/React will inject your JS bundle -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

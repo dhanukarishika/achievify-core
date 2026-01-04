@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 
 const CanvasDoodle = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Store the context in a ref to access it in handlers without re-triggering effects
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#88ccff');
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
@@ -16,85 +18,159 @@ const CanvasDoodle = () => {
     '#ffffff', '#ff6b6b', '#4ecdc4', '#ffe66d', '#a8e6cf'
   ];
 
+  // This is the background color. We need it for the eraser.
+  const CANVAS_BACKGROUND = 'rgba(10, 22, 40, 0.5)';
+
+  // --- Canvas Setup and Responsive Resizing ---
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctxRef.current = ctx;
 
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    // Function to handle resizing
+    const resizeCanvas = () => {
+      // Get the size of the canvas element
+      const rect = canvas.getBoundingClientRect();
+      // Get the device pixel ratio for high-DPI screens
+      const dpr = window.devicePixelRatio || 1;
 
-    // Fill with semi-transparent dark background
-    ctx.fillStyle = 'rgba(10, 22, 40, 0.5)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Set the *drawing buffer* size, scaled by DPR
+      // This ensures the drawing is sharp
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+
+      // Scale the context to match the DPR
+      // Now, all drawing operations are in "CSS pixels"
+      ctx.scale(dpr, dpr);
+
+      // Redraw the background
+      // We use rect.width/height because the context is scaled
+      fillBackground(ctx, rect.width, rect.height);
+    };
+
+    // Use ResizeObserver to automatically resize when the element changes
+    const resizeObserver = new ResizeObserver(resizeCanvas);
+    resizeObserver.observe(canvas);
+
+    // Initial resize
+    resizeCanvas();
+
+    // Cleanup
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // --- Helper Functions ---
 
-    setIsDrawing(true);
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+  // Fills the canvas with the background color
+  const fillBackground = (
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number
+  ) => {
+    ctx.fillStyle = CANVAS_BACKGROUND;
+    ctx.fillRect(0, 0, width, height);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-
+  // Gets the correct (x, y) coordinates for both mouse and touch events
+  const getCoordinates = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!canvas) return null;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let clientX, clientY;
 
-    ctx.lineWidth = tool === 'eraser' ? 20 : 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    if (tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
+    if ('touches' in e) {
+      // Touch event
+      if (e.touches.length === 0) return null;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = color;
+      // Mouse event
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
 
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+    // Coordinates are relative to the canvas element (CSS pixels)
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
+  };
+
+  // --- Drawing Event Handlers ---
+
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    const ctx = ctxRef.current;
+    const coords = getCoordinates(e);
+    if (!ctx || !coords) return;
+
+    setIsDrawing(true);
+    ctx.beginPath(); // Start a new path
+    ctx.moveTo(coords.x, coords.y); // Move "pen" to the starting point
+  };
+
+  const draw = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    if (!isDrawing) return;
+    const ctx = ctxRef.current;
+    const coords = getCoordinates(e);
+    if (!ctx || !coords) return;
+
+    // Setup line properties
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalCompositeOperation = 'source-over'; // Default drawing mode
+
+    if (tool === 'eraser') {
+      // ✅ FIX: "Erase" by drawing with the background color
+      ctx.strokeStyle = CANVAS_BACKGROUND;
+      ctx.lineWidth = 20;
+    } else {
+      // Draw with the selected color
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+    }
+
+    // ✅ FIX: Only draw a line and stroke it.
+    // Do NOT beginPath() or moveTo() here.
+    ctx.lineTo(coords.x, coords.y); // Draw line to new point
+    ctx.stroke(); // Render the line
   };
 
   const stopDrawing = () => {
+    if (!isDrawing) return;
+    const ctx = ctxRef.current;
     setIsDrawing(false);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.beginPath();
+    if (ctx) {
+      ctx.beginPath(); // "Lift the pen"
+    }
   };
+
+  // --- Toolbar Functions ---
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.fillStyle = 'rgba(10, 22, 40, 0.5)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Get the element's CSS size
+    const rect = canvas.getBoundingClientRect();
+    
+    // Clear the canvas
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    
+    // Redraw the background
+    fillBackground(ctx, rect.width, rect.height);
   };
 
   return (
@@ -103,7 +179,8 @@ const CanvasDoodle = () => {
       animate={{ opacity: 1, y: 0 }}
       className="w-full"
     >
-      <Card className="glass-strong p-6">
+      {/* ✅ FIX: Added pointer-events-none to the Card to let clicks pass through */}
+      <Card className="glass-strong p-6 relative pointer-events-none">
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gradient mb-2">Canvas Doodle</h2>
           <p className="text-muted-foreground">
@@ -112,7 +189,8 @@ const CanvasDoodle = () => {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        {/* ✅ FIX: Added pointer-events-auto to the toolbar wrapper */}
+        <div className="flex flex-wrap gap-2 mb-4 pointer-events-auto">
           <Button
             variant={tool === 'pen' ? 'default' : 'outline'}
             size="sm"
@@ -159,10 +237,11 @@ const CanvasDoodle = () => {
 
         {/* Color Picker */}
         {showColorPicker && (
+          /* ✅ FIX: Added pointer-events-auto to the color picker wrapper */
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="flex flex-wrap gap-2 mb-4 p-3 glass rounded-lg"
+            className="flex flex-wrap gap-2 mb-4 p-3 glass rounded-lg pointer-events-auto"
           >
             {colors.map((c) => (
               <button
@@ -183,11 +262,19 @@ const CanvasDoodle = () => {
         {/* Canvas */}
         <canvas
           ref={canvasRef}
+          // --- Event Handlers ---
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
-          className="w-full h-[400px] rounded-lg cursor-crosshair glass border border-white/10"
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+          // ---
+          // ✅ FIX: Added pointer-events-auto to the canvas
+          className="w-full h-[400px] rounded-lg cursor-crosshair border border-white/10 relative z-10 pointer-events-auto"
+          // ---
+          // Prevent page scrolling while drawing on touch devices
           style={{ touchAction: 'none' }}
         />
       </Card>
@@ -196,3 +283,4 @@ const CanvasDoodle = () => {
 };
 
 export default CanvasDoodle;
+
