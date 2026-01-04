@@ -49,9 +49,9 @@ Copy code
 
 Create a `.env` file using `.env.example`:
 
-VITE_SUPABASE_PROJECT_ID=your_project_id_here
-VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key_here
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_PROJECT_ID=ctammvohuhivmyaujxka
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0YW1tdm9odWhpdm15YXVqeGthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1NDMyOTgsImV4cCI6MjA4MzExOTI5OH0.FWRrOBm4NeVB4YloxeIz6B4jBfNQLhhevhKM2X_Fw68
+VITE_SUPABASE_URL=https://ctammvohuhivmyaujxka.supabase.co
 
 yaml
 Copy code
